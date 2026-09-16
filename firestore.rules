@@ -1,0 +1,75 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isWarden() {
+      return isAuthenticated() && getUserData().role == 'warden';
+    }
+
+    function isStudent() {
+      return isAuthenticated() && getUserData().role == 'student';
+    }
+
+    // USERS COLLECTION
+    match /users/{userId} {
+      // Any authenticated user can read their own profile; wardens can read all student profiles
+      allow read: if isAuthenticated() && (isOwner(userId) || isWarden());
+
+      // Student can register their profile if role is 'student'
+      allow create: if isAuthenticated() 
+                    && isOwner(userId) 
+                    && request.resource.data.role == 'student';
+
+      // Profile updates: Owner can update permitted fields (cannot escalate role)
+      allow update: if isAuthenticated() 
+                    && isOwner(userId) 
+                    && request.resource.data.role == resource.data.role;
+
+      // Deletion is prohibited through client app
+      allow delete: if false;
+    }
+
+    // OUTING REQUESTS COLLECTION
+    match /outing_requests/{requestId} {
+      // Students can read only their own requests; Wardens can read all requests
+      allow read: if isAuthenticated() && (
+        resource.data.studentUid == request.auth.uid || isWarden()
+      );
+
+      // Students can create requests for themselves with status 'pending'
+      allow create: if isAuthenticated() 
+                    && request.resource.data.studentUid == request.auth.uid
+                    && request.resource.data.status == 'pending';
+
+      // Updates: ONLY authorized Wardens can update status, approval timestamps, and departure/return records
+      allow update: if isWarden() && (
+        // Valid status transitions:
+        // PENDING -> APPROVED
+        (resource.data.status == 'pending' && request.resource.data.status == 'approved') ||
+        // PENDING -> REJECTED
+        (resource.data.status == 'pending' && request.resource.data.status == 'rejected') ||
+        // APPROVED -> OUTSIDE
+        (resource.data.status == 'approved' && request.resource.data.status == 'outside') ||
+        // OUTSIDE -> RETURNED
+        (resource.data.status == 'outside' && request.resource.data.status == 'returned')
+      );
+
+      // Outing history records cannot be deleted from client app
+      allow delete: if false;
+    }
+  }
+}

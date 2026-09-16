@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "410957326255",
+    "project_id": "gateentry-8ef3e",
+    "storage_bucket": "gateentry-8ef3e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:410957326255:android:faa8576e08538329fbb15a",
+        "android_client_info": {
+          "package_name": "com.hostel.gatepass.hostel_gate_pass"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAm9cDSeJovoa1Sb2sV30W5ZwX1mS89q3Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
