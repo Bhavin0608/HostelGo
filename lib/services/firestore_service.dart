@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import '../models/feedback_model.dart';
 import '../models/outing_request_model.dart';
 import '../utils/constants.dart';
 
@@ -9,6 +10,9 @@ class FirestoreService {
 
   CollectionReference get _requestsRef =>
       _firestore.collection(AppConstants.collectionRequests);
+
+  CollectionReference get _feedbacksRef =>
+      _firestore.collection(AppConstants.collectionFeedbacks);
 
   // Generate readable Request ID (e.g., REQ-20260825-4821)
   String _generateRequestId(DateTime date) {
@@ -312,5 +316,92 @@ class FirestoreService {
       'role': AppConstants.roleWarden,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  // ==========================================
+  // STUDENT FEEDBACK & GRIEVANCE METHODS
+  // ==========================================
+
+  // Submit feedback / grievance from student
+  Future<FeedbackModel> submitFeedback({
+    required String studentUid,
+    required String studentName,
+    required String studentId,
+    required String hostel,
+    required String roomNumber,
+    required String category,
+    required int rating,
+    required String subject,
+    required String message,
+  }) async {
+    try {
+      final docRef = _feedbacksRef.doc();
+      final feedback = FeedbackModel(
+        id: docRef.id,
+        studentUid: studentUid,
+        studentName: studentName.trim(),
+        studentId: studentId.trim(),
+        hostel: hostel.trim(),
+        roomNumber: roomNumber.trim(),
+        category: category.trim(),
+        rating: rating.clamp(1, 5),
+        subject: subject.trim(),
+        message: message.trim(),
+        createdAt: DateTime.now(),
+        status: AppConstants.feedbackSubmitted,
+      );
+
+      await docRef.set(feedback.toMap());
+      return feedback;
+    } catch (e) {
+      if (e is String) rethrow;
+      throw 'Failed to submit feedback: $e';
+    }
+  }
+
+  // Stream of feedbacks submitted by a specific student
+  Stream<List<FeedbackModel>> getStudentFeedbacksStream(String studentUid) {
+    return _feedbacksRef
+        .where('studentUid', isEqualTo: studentUid)
+        .snapshots()
+        .map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => FeedbackModel.fromFirestore(doc))
+          .toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
+  // Stream of all student feedbacks for warden
+  Stream<List<FeedbackModel>> getAllFeedbacksStream() {
+    return _feedbacksRef.snapshots().map((snapshot) {
+      final list = snapshot.docs
+          .map((doc) => FeedbackModel.fromFirestore(doc))
+          .toList();
+      list.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      return list;
+    });
+  }
+
+  // Mark feedback reviewed with optional warden response
+  Future<void> markFeedbackReviewed({
+    required String feedbackId,
+    String? wardenReply,
+  }) async {
+    try {
+      final docRef = _feedbacksRef.doc(feedbackId);
+      final updateData = <String, dynamic>{
+        'status': AppConstants.feedbackReviewed,
+        'reviewedAt': FieldValue.serverTimestamp(),
+      };
+      if (wardenReply != null && wardenReply.trim().isNotEmpty) {
+        updateData['wardenReply'] = wardenReply.trim();
+      }
+      await docRef.update(updateData);
+    } catch (e) {
+      if (e is String) rethrow;
+      throw 'Failed to update feedback: $e';
+    }
   }
 }
