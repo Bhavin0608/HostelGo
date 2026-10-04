@@ -71,5 +71,22 @@ service cloud.firestore {
       // Outing history records cannot be deleted from client app
       allow delete: if false;
     }
+
+    // STUDENT FEEDBACKS COLLECTION
+    match /student_feedbacks/{feedbackId} {
+      // Students can read their own feedbacks; Wardens can read all feedbacks
+      allow read: if isAuthenticated() && (
+        resource.data.studentUid == request.auth.uid || isWarden()
+      );
+
+      // Students can submit feedback for themselves
+      allow create: if isAuthenticated() 
+                    && request.resource.data.studentUid == request.auth.uid;
+
+      // Wardens can review / reply to feedback
+      allow update: if isWarden();
+
+      allow delete: if isWarden();
+    }
   }
 }
