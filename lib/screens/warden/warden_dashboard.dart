@@ -13,6 +13,7 @@ import '../auth/login_screen.dart';
 import 'approved_outings_screen.dart';
 import 'currently_outside_screen.dart';
 import 'request_review_screen.dart';
+import 'warden_feedbacks_screen.dart';
 
 class WardenDashboard extends StatefulWidget {
   final int initialTabIndex;
@@ -372,6 +373,18 @@ class _WardenDashboardState extends State<WardenDashboard> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(builder: (_) => const CurrentlyOutsideScreen()),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _buildPortalButton(
+                        title: 'Feedback',
+                        icon: Icons.rate_review_outlined,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => const WardenFeedbacksScreen()),
                           );
                         },
                       ),
@@ -842,6 +855,75 @@ class _WardenDashboardState extends State<WardenDashboard> {
                     _buildKv('Email', _currentUser!.email),
                     _buildKv('Hostel', _currentUser!.hostel),
                     _buildKv('Role', 'Warden (Administrator)'),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: AppColors.shadowSm,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'STUDENT GRIEVANCES & FEEDBACK',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.8,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const WardenFeedbacksScreen()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppColors.primarySoft,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.rate_review_rounded, color: Colors.white, size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Review Student Feedbacks',
+                                    style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                                  ),
+                                  Text(
+                                    'View star ratings, grievances and send replies',
+                                    style: TextStyle(fontSize: 11.5, color: AppColors.textMuted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: AppColors.textMuted),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
